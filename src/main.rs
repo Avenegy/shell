@@ -1,9 +1,7 @@
 use colored::Colorize;
 use rustyline::error::ReadlineError;
-use rustyline::{DefaultEditor, InputMode, Prompt, Result};
+use rustyline::{DefaultEditor, Result};
 use std::env::{current_dir, set_current_dir};
-use std::io::Write;
-use std::io::{self};
 use std::process::Command;
 use users::{get_current_uid, get_user_by_uid};
 
@@ -11,10 +9,8 @@ fn main() -> Result<()> {
     let user =
         get_user_by_uid(get_current_uid()).expect("programm panicked at: can't get the user UUID");
     let mut path = current_dir().expect("programm panicked at: can't get current directory");
-    // let mut history: Vec<String> = vec![];
-
     let mut rl = DefaultEditor::new()?;
-
+    rl.load_history("history.txt").ok();
     loop {
         let path_str = path.to_string_lossy();
         let part_path: Vec<&str> = path_str.split('/').collect();
@@ -34,6 +30,8 @@ fn main() -> Result<()> {
                 let parts: Vec<&str> = line.split_whitespace().collect();
                 if parts.is_empty() {
                     continue;
+                } else {
+                    rl.add_history_entry(line)?;
                 }
 
                 match parts[0] {
@@ -62,7 +60,7 @@ fn main() -> Result<()> {
                         println!("{}", path.display());
                     }
 
-                    "exit" => break Ok(()),
+                    "exit" => break,
 
                     cmd => match Command::new(cmd).args(&parts[1..]).spawn() {
                         Ok(mut c) => {
@@ -76,12 +74,14 @@ fn main() -> Result<()> {
                 continue;
             }
             Err(ReadlineError::Eof) => {
-                break Ok(());
+                break;
             }
             Err(err) => {
                 println!("Error: {:?}", err);
-                break Ok(());
+                break;
             }
         }
     }
+    let _ = rl.save_history("history.txt");
+    Ok(())
 }
