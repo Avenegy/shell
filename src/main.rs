@@ -81,7 +81,7 @@ fn main() -> Result<()> {
         let part_path: Vec<&str> = path_str.split('/').collect();
 
         let prompt = format!(
-            "[{} #{}] ",
+            "[{} @{}] ",
             part_path[part_path.len().saturating_sub(2)..]
                 .join("/")
                 .green(),
